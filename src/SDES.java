@@ -30,16 +30,15 @@ public class SDES {
 				roundKeys[i] = masterKey.substring(i);
 				
 				// if the current key is shorter than 8 bits, wrap around the master key until it gets to 8 bits
-				if (roundKeys[i].length() != 8) {
+				if (roundKeys[i].length() != 8)
 					roundKeys[i] += masterKey.substring(0, 8 - roundKeys[i].length());
-				}
 			}
 		}
 		// arrays used to store R and L for each round
-		String[] R = new String[numRounds];
-		String[] L = new String[numRounds];
+		String[] R = new String[numRounds + 1];
+		String[] L = new String[numRounds + 1];
 		
-		for (int i = 0; i < numRounds; i++) {
+		for (int i = 0; i < numRounds + 1; i++) {
 			if (i == 0) {
 				L[0] = split(text)[0];
 				R[0] = split(text)[1];
@@ -47,14 +46,14 @@ public class SDES {
 				L[i] = R[i-1];
 				
 				// call the f function to get the 6 bit result from the S-boxes
-				String sBoxResults = f(R[i-1], roundKeys[i]);
+				String sBoxResults = f(R[i-1], roundKeys[i - 1]);
 				
 				// XOR those results to the left 6 bits and set it equal to R
 				R[i] = xor(sBoxResults, L[i-1]);
 			}
 		}
 		// print the result
-		String result = L[numRounds - 1] + R[numRounds - 1];
+		String result = L[numRounds] + R[numRounds];
 		System.out.println("Result: " + result);
 
 	}// end of main method
@@ -89,12 +88,14 @@ public class SDES {
 	 * @return  the S-box results (a 6-bit binary string)
 	 */
 	public static String f(String R, String key) {
+		
 		String expandedR = "", xor;
-		String sBoxResults;
+		
 		for (int i = 0; i < R.length(); i++) {
+			// when we get to the 3rd digit, we will annex the 4th and the 3rd twice, and then continue with the last two digits
 			if (i == 2) {
 				expandedR += R.substring(3, 4) + R.substring(2, 3) + R.substring(3, 4) + R.substring(2, 3);
-				i = 3;
+				i++;
 			} else {
 				if (i == R.length() - 1)
 					expandedR += R.substring(i);
@@ -102,14 +103,11 @@ public class SDES {
 					expandedR += R.substring(i, i+1);
 			}
 		}
-
 		// XOR the expanded 8-bit R with the round key
 		xor = xor(expandedR, key);
 		
-		// find the results from passing the bits through the S-boxes
-		sBoxResults = passThroughSBoxes(xor);
-		
-		return sBoxResults;
+		// return the results from passing the bits through the S-boxes
+		return passThroughSBoxes(xor);
 	}// end of f function
 	
 	
@@ -129,6 +127,7 @@ public class SDES {
 				result += (Integer.parseInt(x.substring(i)) + Integer.parseInt(y.substring(i))) % 2;
 		}
 		return result;
+
 	}// end of xor method
 	
 	
@@ -143,6 +142,8 @@ public class SDES {
 		String[][] S1 = {{"101", "010", "001", "110", "011", "100", "111", "000"}, {"001", "100", "110", "010", "000", "111", "101", "011"}};
 		String[][] S2 = {{"100", "000", "110", "101", "111", "001", "011", "010"}, {"101", "011", "000", "111", "110", "010", "010", "100"}};
 		String[] result = new String[2];
+		
+		// split binary digits to left and right sides
 		String left = split(text)[0];
 		String right = split(text)[1];
 		
@@ -153,7 +154,7 @@ public class SDES {
 		// passes right side through S-box1 and left side through S-box2 to get 6-bit result
 		result[0] = S1[Integer.parseInt(left.substring(0, 1))][leftInt];
 		result[1] = S2[Integer.parseInt(right.substring(0, 1))][rightInt];
-		
+
 		return result[0] + result[1];
 	}// end of calculateWithSBoxes method
 
