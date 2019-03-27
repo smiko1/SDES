@@ -9,6 +9,8 @@ public class SDES {
 	 * 
 	 */
 	public static void main(String[] args) {
+		
+		// ask the user for the message, master key, and number of rounds
 		Scanner input = new Scanner(System.in);
 		System.out.println("Enter the plaintext you'd like to encrypt: ");
 		String text = input.next();
@@ -19,13 +21,23 @@ public class SDES {
 		input.close();
 		
 		String[] roundKeys = new String[numRounds];
-		roundKeys[0] = masterKey.substring(0, 8);
-		roundKeys[1] = masterKey.substring(1);
-		roundKeys[2] = masterKey.substring(2) + masterKey.substring(0, 1);
 		
+		// create the round key for each round
+		for (int i = 0; i < numRounds; i++) {
+			if (i == 0)
+				roundKeys[0] = masterKey.substring(0, 8);
+			else {
+				roundKeys[i] = masterKey.substring(i);
+				
+				// if the current key is shorter than 8 bits, wrap around the master key until it gets to 8 bits
+				if (roundKeys[i].length() != 8) {
+					roundKeys[i] += masterKey.substring(0, 8 - roundKeys[i].length());
+				}
+			}
+		}
+		// arrays used to store R and L for each round
 		String[] R = new String[numRounds];
 		String[] L = new String[numRounds];
-		String sBoxResults;
 		
 		for (int i = 0; i < numRounds; i++) {
 			if (i == 0) {
@@ -33,11 +45,15 @@ public class SDES {
 				R[0] = split(text)[1];
 			} else {
 				L[i] = R[i-1];
-				sBoxResults = f(R[i-1], roundKeys[i]);
+				
+				// call the f function to get the 6 bit result from the S-boxes
+				String sBoxResults = f(R[i-1], roundKeys[i]);
+				
+				// XOR those results to the left 6 bits and set it equal to R
 				R[i] = xor(sBoxResults, L[i-1]);
 			}
 		}
-		
+		// print the result
 		String result = L[numRounds - 1] + R[numRounds - 1];
 		System.out.println("Result: " + result);
 
@@ -52,12 +68,14 @@ public class SDES {
 	 */
 	public static String[] split(String text) {
 		String[] split = new String[2];
-		if (text.length() % 2 != 0)
+		if (text.length() % 2 != 0) {
 			System.out.println("Invalid text length");
-
-		split[0] = text.substring(0, text.length() / 2);
-		split[1] = text.substring(text.length() / 2);
-		return split;
+			return null;
+		} else {
+			split[0] = text.substring(0, text.length() / 2);
+			split[1] = text.substring(text.length() / 2);
+			return split;
+		}
 	}// end of split method
 	
 	
@@ -72,7 +90,7 @@ public class SDES {
 	 */
 	public static String f(String R, String key) {
 		String expandedR = "", xor;
-		String[] sBoxResults;
+		String sBoxResults;
 		for (int i = 0; i < R.length(); i++) {
 			if (i == 2) {
 				expandedR += R.substring(3, 4) + R.substring(2, 3) + R.substring(3, 4) + R.substring(2, 3);
@@ -85,10 +103,13 @@ public class SDES {
 			}
 		}
 
+		// XOR the expanded 8-bit R with the round key
 		xor = xor(expandedR, key);
-		sBoxResults = calculateWithSBoxes(xor);
 		
-		return sBoxResults[0] + sBoxResults[1];
+		// find the results from passing the bits through the S-boxes
+		sBoxResults = passThroughSBoxes(xor);
+		
+		return sBoxResults;
 	}// end of f function
 	
 	
@@ -118,17 +139,22 @@ public class SDES {
 	 * @param text  the binary String to be put through the two S-boxes
 	 * @return  the results for S-box1 and S-box2
 	 */
-	public static String[] calculateWithSBoxes(String text) {
+	public static String passThroughSBoxes(String text) {
 		String[][] S1 = {{"101", "010", "001", "110", "011", "100", "111", "000"}, {"001", "100", "110", "010", "000", "111", "101", "011"}};
 		String[][] S2 = {{"100", "000", "110", "101", "111", "001", "011", "010"}, {"101", "011", "000", "111", "110", "010", "010", "100"}};
 		String[] result = new String[2];
 		String left = split(text)[0];
 		String right = split(text)[1];
+		
+		// calculates binary to integer
 		int leftInt = Integer.parseInt(left.substring(1), 2);
 		int rightInt = Integer.parseInt(right.substring(1), 2);
+		
+		// passes right side through S-box1 and left side through S-box2 to get 6-bit result
 		result[0] = S1[Integer.parseInt(left.substring(0, 1))][leftInt];
 		result[1] = S2[Integer.parseInt(right.substring(0, 1))][rightInt];
-		return result;
+		
+		return result[0] + result[1];
 	}// end of calculateWithSBoxes method
 
 }// end of SDES class
