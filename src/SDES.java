@@ -1,4 +1,4 @@
-import java.util.Arrays;
+
 import java.util.Scanner;
 
 public class SDES {
@@ -23,8 +23,6 @@ public class SDES {
 		roundKeys[1] = masterKey.substring(1);
 		roundKeys[2] = masterKey.substring(2) + masterKey.substring(0, 1);
 		
-		System.out.println(Arrays.toString(roundKeys));
-		
 		String[] R = new String[numRounds];
 		String[] L = new String[numRounds];
 		String sBoxResults;
@@ -47,24 +45,6 @@ public class SDES {
 	
 	
 	/**
-	 * Converts binary digits to an integer
-	 * 
-	 * @param bin  the binary digit
-	 * @return  the binary digit in integer form
-	 */
-	public static int binToInt(String bin) {
-		int sum = 0;
-		System.out.println("bin: " + bin);
-		for (int i = 0; i < bin.length(); i++) {
-			sum += Integer.parseInt(bin.substring(i)) * (2^(bin.length() - i - 1));
-			System.out.print(sum);
-		}
-		System.out.println("sum: " + sum);
-		return sum;
-	}// end of binToInt method
-	
-	
-	/**
 	 * Splits the binary digit into a right and left half.
 	 * 
 	 * @param text  the binary digit to split
@@ -77,7 +57,6 @@ public class SDES {
 
 		split[0] = text.substring(0, text.length() / 2);
 		split[1] = text.substring(text.length() / 2);
-		System.out.println("split method: " + split[0] + " " + split[1]);
 		return split;
 	}// end of split method
 	
@@ -97,7 +76,7 @@ public class SDES {
 		for (int i = 0; i < R.length(); i++) {
 			if (i == 2) {
 				expandedR += R.substring(3, 4) + R.substring(2, 3) + R.substring(3, 4) + R.substring(2, 3);
-				i = 4;
+				i = 3;
 			} else {
 				if (i == R.length() - 1)
 					expandedR += R.substring(i);
@@ -105,9 +84,10 @@ public class SDES {
 					expandedR += R.substring(i, i+1);
 			}
 		}
-		
+
 		xor = xor(expandedR, key);
 		sBoxResults = calculateWithSBoxes(xor);
+		
 		return sBoxResults[0] + sBoxResults[1];
 	}// end of f function
 	
@@ -120,7 +100,6 @@ public class SDES {
 	 * @return  the calculation results
 	 */
 	public static String xor(String x, String y) {
-		System.out.println("Lengths of x and y in XOR: " + x.length() + " " + y.length());
 		String result = "";
 		for (int i = 0; i < x.length(); i++) {
 			if (i < x.length() - 1)
@@ -144,17 +123,28 @@ public class SDES {
 		String[][] S2 = {{"100", "000", "110", "101", "111", "001", "011", "010"}, {"101", "011", "000", "111", "110", "010", "010", "100"}};
 		String[] result = new String[2];
 		String left = split(text)[0];
-		System.out.println("left side of text: " + left);
 		String right = split(text)[1];
-		System.out.println("right side of text: " + right);
-		int leftInt = binToInt(left.substring(1));
-		System.out.println("left int: " + leftInt);
-		int rightInt = binToInt(right.substring(1));
-		System.out.println("right int: " + rightInt);
-		result[0] = S1[Integer.parseInt(left.substring(0))][leftInt];
-		result[1] = S2[Integer.parseInt(right.substring(0))][rightInt];
+		int leftInt = Integer.parseInt(left.substring(1), 2);
+		int rightInt = Integer.parseInt(right.substring(1), 2);
+		result[0] = S1[Integer.parseInt(left.substring(0, 1))][leftInt];
+		result[1] = S2[Integer.parseInt(right.substring(0, 1))][rightInt];
 		return result;
 	}// end of calculateWithSBoxes method
+	
+	
+	/**
+	 * Converts binary digits to an integer
+	 * 
+	 * @param bin  the binary digit
+	 * @return  the binary digit in integer form
+	 */
+	public static int binToInt(String bin) {
+		int sum = 0;
+		for (int i = 0; i < bin.length(); i++)
+			sum += Integer.parseInt(bin.substring(i)) * (2^(bin.length() - i - 1));
+		
+		return sum;
+	}// end of binToInt method
 	
 
 }// end of SDES class
