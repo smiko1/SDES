@@ -130,21 +130,5 @@ public class SDES {
 		result[1] = S2[Integer.parseInt(right.substring(0, 1))][rightInt];
 		return result;
 	}// end of calculateWithSBoxes method
-	
-	
-	/**
-	 * Converts binary digits to an integer
-	 * 
-	 * @param bin  the binary digit
-	 * @return  the binary digit in integer form
-	 */
-	public static int binToInt(String bin) {
-		int sum = 0;
-		for (int i = 0; i < bin.length(); i++)
-			sum += Integer.parseInt(bin.substring(i)) * (2^(bin.length() - i - 1));
-		
-		return sum;
-	}// end of binToInt method
-	
 
 }// end of SDES class
